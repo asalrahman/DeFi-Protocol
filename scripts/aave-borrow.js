@@ -25,16 +25,27 @@ async function main (){
 let {availableBorrowsETH,totalDebtETH}= await getBorrowUserdata(lendingPool,deployer);
 //dai/ETH
   const Daiprice = await getDaiPrice();
-const amountDaiToBorrow = (availableBorrowsETH.toString() * 0.95 * (1 / Daiprice))
+const amountDaiToBorrow = (availableBorrowsETH.toString() * 0.95 * (1 / Daiprice))// borrowing 95%
 console.log(`DAI amount ${amountDaiToBorrow}`);
 const amountDaiToBorrowWei = ethers.utils.parseEther(amountDaiToBorrow.toString());
-daiAddress="0x6B175474E89094C44Da98b954EedeAC495271d0F"
-await borrowDai(daiAddress,lendingPool,deployer,amountDaiToBorrowWei);
+daiTokenAddress="0x6B175474E89094C44Da98b954EedeAC495271d0F"
+await borrowDai(daiTokenAddress,lendingPool,deployer,amountDaiToBorrowWei);
 await getBorrowUserdata(lendingPool,deployer);
 
+//repay
+const repay = await Repay(amountDaiToBorrowWei,daiTokenAddress,lendingPool,deployer);
+await getBorrowUserdata(lendingPool,deployer);
 }
 
 
+
+
+async function Repay(amount,daiAddress,lendingPool,account){
+    await approveErc20(daiAddress,lendingPool.address,amount, account)
+    const repayTx= await lendingPool.repay(daiAddress,amount, 1, account);
+    await repayTx.wait(1);
+    console.log("reapaid");
+}
 
 
 async function borrowDai(daiAddress,lendingPool,account,amountDaiToBorrowWei){
